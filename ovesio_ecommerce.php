@@ -9,7 +9,7 @@ class Ovesio_Ecommerce extends Module
     {
         $this->name = 'ovesio_ecommerce';
         $this->tab = 'administration';
-        $this->version = '1.0.0';
+        $this->version = '1.1.0';
         $this->author = 'Ovesio';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
