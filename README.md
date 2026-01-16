@@ -40,7 +40,6 @@ Connect your store to Ovesio to unlock powerful capabilities:
     *   Navigate to **Improve** > **Modules** > **Module Manager**.
     *   Click the **Upload a module** button.
     *   Select or drag & drop the downloaded zip archive.
-    *   Click the **Install** button.
 
 ## Configuration
 

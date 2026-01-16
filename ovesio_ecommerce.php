@@ -8,13 +8,13 @@ class Ovesio_Ecommerce extends Module
     public function __construct()
     {
         $this->name = 'ovesio_ecommerce';
-        $this->tab = 'analytics_stats';
+        $this->tab = 'administration';
         $this->version = '1.0.0';
         $this->author = 'Ovesio';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = [
-            'min' => '1.7',
-            'max' => _PS_VERSION_
+            'min' => '1.7.0.0',
+            'max' => '1.7.99.99'
         ];
         $this->bootstrap = true;
 
@@ -32,12 +32,13 @@ class Ovesio_Ecommerce extends Module
             Shop::setContext(Shop::CONTEXT_ALL);
         }
 
-        $hash = md5(uniqid(mt_rand(), true));
+        $hash = md5(uniqid((string)mt_rand(), true));
 
         // Default settings
         if (!parent::install() ||
             !Configuration::updateValue('OVESIO_ECOMMERCE_STATUS', 0) ||
             !Configuration::updateValue('OVESIO_ECOMMERCE_EXPORT_DURATION', 12) ||
+            !Configuration::updateValue('OVESIO_ECOMMERCE_ORDER_STATES', '') ||
             !Configuration::updateValue('OVESIO_ECOMMERCE_HASH', $hash)
         ) {
             return false;
@@ -51,6 +52,7 @@ class Ovesio_Ecommerce extends Module
         if (!parent::uninstall() ||
             !Configuration::deleteByName('OVESIO_ECOMMERCE_STATUS') ||
             !Configuration::deleteByName('OVESIO_ECOMMERCE_EXPORT_DURATION') ||
+            !Configuration::deleteByName('OVESIO_ECOMMERCE_ORDER_STATES') ||
             !Configuration::deleteByName('OVESIO_ECOMMERCE_HASH')
         ) {
             return false;
@@ -67,9 +69,17 @@ class Ovesio_Ecommerce extends Module
         if (Tools::isSubmit('submitOvesioEcommerce')) {
             $status = (string)Tools::getValue('OVESIO_ECOMMERCE_STATUS');
             $duration = (int)Tools::getValue('OVESIO_ECOMMERCE_EXPORT_DURATION');
+            $orderStates = Tools::getValue('OVESIO_ECOMMERCE_ORDER_STATES');
+
+            if (is_array($orderStates)) {
+                $orderStates = json_encode($orderStates);
+            } else {
+                $orderStates = '';
+            }
 
             Configuration::updateValue('OVESIO_ECOMMERCE_STATUS', $status);
             Configuration::updateValue('OVESIO_ECOMMERCE_EXPORT_DURATION', $duration);
+            Configuration::updateValue('OVESIO_ECOMMERCE_ORDER_STATES', $orderStates);
 
             $output .= $this->displayConfirmation($this->l('Settings updated'));
         }
@@ -139,6 +149,19 @@ class Ovesio_Ecommerce extends Module
                             'name' => 'name'
                         ]
                     ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Order Statuses'),
+                        'name' => 'OVESIO_ECOMMERCE_ORDER_STATES',
+                        'multiple' => true,
+                        'class' => 'chosen',
+                        'desc' => $this->l('Select the order statuses to export. Leave empty to use default (standard valid orders).'),
+                        'options' => [
+                            'query' => \OrderState::getOrderStates((int)$this->context->language->id),
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save'),
@@ -170,9 +193,17 @@ class Ovesio_Ecommerce extends Module
 
     public function getConfigFormValues()
     {
+        $orderStates = Configuration::get('OVESIO_ECOMMERCE_ORDER_STATES');
+        if ($orderStates) {
+            $orderStates = json_decode($orderStates, true);
+        } else {
+            $orderStates = [];
+        }
+
         return [
             'OVESIO_ECOMMERCE_STATUS' => Configuration::get('OVESIO_ECOMMERCE_STATUS', 0),
             'OVESIO_ECOMMERCE_EXPORT_DURATION' => Configuration::get('OVESIO_ECOMMERCE_EXPORT_DURATION', 12),
+            'OVESIO_ECOMMERCE_ORDER_STATES[]' => $orderStates,
         ];
     }
 }
